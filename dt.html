@@ -1,0 +1,60 @@
+Model the following Property system as a document database. Consider a set of Property, Owner. One owner can buy many properties.
+Assume appropriate attributes and collections as per the query requirements.
+Insert at least 05 documents in each collection.
+Answer the following queries:
+a. Display area-wise property details.
+b. Display property owned by 'Abhishek Shinde' having minimum rate.
+c. Give the details of the owner whose property is at "Nashik."
+d. Display area of property whose rate is less than 100000.
+Program:
+
+  
+ 
+# Start MongoDB   
+mongosh
+
+# Create and select the database
+use PropertySystem
+
+# Create and insert documents into the 'owners' collection
+db.owners.insertMany([
+  { _id: 1, name: "Abhishek Shinde", contact: "9876543210" },
+  { _id: 2, name: "Vaibhav Nirmal", contact: "8765432109" },
+  { _id: 3, name: "Gauri Mhaske", contact: "7654321098" },
+  { _id: 4, name: "Pooja Patil", contact: "6543210987" },
+  { _id: 5, name: "Rahul Kale", contact: "5432109876" }
+])
+
+# Create and insert documents into the 'properties' collection
+db.properties.insertMany([
+  { _id: 1, area: "Pune", rate: 150000, owner_id: 1 },
+  { _id: 2, area: "Nashik", rate: 90000, owner_id: 2 },
+  { _id: 3, area: "Mumbai", rate: 250000, owner_id: 3 },
+  { _id: 4, area: "Nashik", rate: 80000, owner_id: 1 },
+  { _id: 5, area: "Aurangabad", rate: 70000, owner_id: 5 }
+])
+
+# a. Display area-wise property details
+db.properties.aggregate([
+  { $group: { _id: "$area", properties: { $push: "$$ROOT" } } }
+])
+
+# b. Display property owned by 'Abhishek Shinde' having minimum rate
+db.properties.find({ owner_id: 1 }).sort({ rate: 1 }).limit(1)
+
+# c. Give the details of the owner whose property is at "Nashik"
+db.properties.aggregate([
+  { $match: { area: "Nashik" } },
+  { $lookup: {
+    from: "owners",
+    localField: "owner_id",
+    foreignField: "_id",
+    as: "owner_details"
+  } }
+])
+
+# d. Display area of property whose rate is less than 100000
+db.properties.find(
+  { rate: { $lt: 100000 } },
+  { _id: 0, area: 1 }
+)
